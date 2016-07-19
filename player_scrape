@@ -1,3 +1,5 @@
+# this code is to scrape the player statistics from the 27 NBA teams between the 2002 to 2010 season
+
 import urllib2
 from bs4 import BeautifulSoup
 import pandas as pd
