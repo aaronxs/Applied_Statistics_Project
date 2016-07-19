@@ -1,4 +1,4 @@
-# this code is to scrape the game by game record from all of the teams in the NBA between the 2002 to 2010 season
+# this code is to scrape the game by game record from all of the teams in the NBA between the 2010 to 2015 season
 
 import urllib2
 from bs4 import BeautifulSoup
@@ -6,7 +6,7 @@ import pandas as pd
 
 teams = ['ATL','BOS','BRK','CHI','CLE','DAL','DEN','DET','GSW','HOU','IND','LAL','LAC','MEM','MIA','MIL','MIN','NYK','ORL','PHI','PHO','POR','SAC','SAS','TOR','UTA','WAS']
 
-for year in range(2002,2010):
+for year in range(2010,2015):
     rec_df = pd.DataFrame([],columns = ['Date','Opponent','Tm','Opp','W','L','Streak','Rec']) 
     writer = pd.ExcelWriter('rec_' + str(year) + '.xlsx')
     for team in teams:
