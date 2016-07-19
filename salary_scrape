@@ -1,4 +1,4 @@
-# this code is to scrape the salary of players from all of the teams in NBA between the 2002 to 2010 season
+# this code is to scrape the salary of players from all of the teams in the NBA between the 2002 to 2010 season
 
 import urllib2
 import os
