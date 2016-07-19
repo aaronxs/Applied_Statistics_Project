@@ -1,4 +1,4 @@
-# this code is to scrape the salary of players from all of the teams in the NBA between the 2002 to 2010 season
+# this code is to scrape the salary of players from all of the teams in the NBA between the 2010 to 2015 season
 
 import urllib2
 import os
@@ -12,7 +12,7 @@ writer = pd.ExcelWriter('salary.new.xlsx')
 
 for team in teams:
     salary_df = pd.DataFrame([],columns = ['year','team','salary', 'tier_1', 'tier_2', 'tier_3'])
-    for year in range(2002,2010):
+    for year in range(2010,2015):
        
         response = urllib2.urlopen('http://www.basketball-reference.com/teams/{}/{}.html'.format(team,year))
         html = response.read()
