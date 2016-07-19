@@ -1,0 +1,97 @@
+# this code is to scrape the standings from the NBA between the 2010 to 2015 season
+
+import urllib2
+from bs4 import BeautifulSoup
+import pandas as pd
+
+east_playoff_df = pd.DataFrame([],columns = ['Team', 'W', 'L', 'PS/G', 'PA/G', 'SRS', 'Playoff'])
+west_playoff_df = pd.DataFrame([],columns = ['Team', 'W', 'L', 'PS/G', 'PA/G', 'SRS', 'Playoff'])
+writer1 = pd.ExcelWriter('east_playoff.new1.xlsx')
+writer2 = pd.ExcelWriter('west_playoff.new1.xlsx')
+
+for year in range(2010,2015):
+    response = urllib2.urlopen('http://www.basketball-reference.com/leagues/NBA_{}_standings.html'.format(year))
+    html = response.read()
+    
+    soup = BeautifulSoup(html,'html.parser')
+    
+    east_team_standing=soup.find("table",id="E_standings")
+    west_team_standing=soup.find("table",id="W_standings")
+    
+    east_data = east_team_standing.find_all("tr")
+    west_data = west_team_standing.find_all("tr")
+    
+    east_new_data = []
+    west_new_data = []
+    
+    for i in east_data:
+        east_new_data.append(i.text)
+    for i in west_data:
+        west_new_data.append(i.text)
+    
+    east_new_data2 = []
+    west_new_data2 = []
+    
+    for i in east_new_data:
+        east_new_data2.append((i.replace('\n',',')).split(','))
+    for i in west_new_data:
+        west_new_data2.append((i.replace('\n',',')).split(','))
+            
+    east_new_data3 = [ x[1:9] for x in east_new_data2]
+    west_new_data3 = [ x[1:9] for x in west_new_data2]
+    
+    #new_data4 = map(lambda x: [x[0],x[1],(x[2].replace(',','').replace('$',''))], new_data3)
+    
+    east_df = pd.DataFrame(east_new_data3,columns=['Team', 'W', 'L', 'W/L%', 'GB', 'PS/G', 'PA/G', 'SRS'])
+    east_df = east_df.drop(east_df.columns[[3,4]], axis=1)        
+    east_df = east_df.drop([0,1,7,13], axis=0)
+    east_df[['W', 'L', 'PS/G', 'PA/G', 'SRS']] = east_df[['W', 'L', 'PS/G', 'PA/G', 'SRS']].astype('float64')       
+    east_df = east_df.sort_values(by='W', ascending=False)
+       
+    west_df = pd.DataFrame(west_new_data3,columns=['Team', 'W', 'L', 'W/L%', 'GB', 'PS/G', 'PA/G', 'SRS'])
+    west_df = west_df.drop(west_df.columns[[3,4]], axis=1)
+    west_df = west_df.drop([0,1,7,13], axis=0)
+    west_df[['W', 'L', 'PS/G', 'PA/G', 'SRS']] = west_df[['W', 'L', 'PS/G', 'PA/G', 'SRS']].astype('float64')
+    west_df = west_df.sort_values(by='W', ascending=False)
+    
+    rank = []
+    rank.extend([1]*8)
+    rank.extend([0]*7)
+    east_df['Playoff'] = rank
+    west_df['Playoff'] = rank
+    
+    east_df = pd.DataFrame(east_df.as_matrix(), columns=east_df.columns)
+    west_df = pd.DataFrame(west_df.as_matrix(), columns=west_df.columns)     
+    
+    temp_east = []
+    for team in east_df['Team']:
+        temp_east.extend([team.replace(team[-5:], u'')])
+    east_df['Team'] = temp_east
+
+    temp_west = []
+    for team in west_df['Team']:
+        temp_west.extend([team.replace(team[-5:], u'')])
+    west_df['Team'] = temp_west   
+    
+#    east_df = east_df.sort_values(by='Team', ascending=True)
+#    east_df = pd.DataFrame(east_df.as_matrix(), columns=east_df.columns)
+#    west_df = west_df.sort_values(by='Team', ascending=True)
+#    west_df = pd.DataFrame(west_df.as_matrix(), columns=west_df.columns)
+ 
+#    east_hold = pd.DataFrame([],columns = [str(year)])
+#    east_hold[str(year)] = east_df['Playoff']
+#    west_hold = pd.DataFrame([],columns = [str(year)])
+#    west_hold[str(year)] = west_df['Playoff']
+   
+    east_playoff_df = pd.concat([east_playoff_df,east_df])
+    west_playoff_df = pd.concat([west_playoff_df,west_df])
+ 
+ # END LOOP HERE
+    east_playoff_df.to_excel(writer1, str(year))
+    west_playoff_df.to_excel(writer2, str(year))
+    east_playoff_df = pd.DataFrame([],columns = ['Team', 'W', 'L', 'PS/G', 'PA/G', 'SRS', 'Playoff'])
+    west_playoff_df = pd.DataFrame([],columns = ['Team', 'W', 'L', 'PS/G', 'PA/G', 'SRS', 'Playoff'])
+#east_hold['Team'] = east_df['Team']
+#west_hold['Team'] = west_df['Team']
+writer1.save()
+writer2.save()
