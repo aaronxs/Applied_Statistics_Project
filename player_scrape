@@ -1,4 +1,4 @@
-# this code is to scrape the player statistics from the 27 NBA teams between the 2002 to 2010 season
+# this code is to scrape the player statistics from all of the teams in the NBA between the 2002 to 2010 season
 
 import urllib2
 from bs4 import BeautifulSoup
@@ -71,8 +71,6 @@ for year in range(2002,2010):
         advanced_df = pd.DataFrame(advanced_df.as_matrix(), columns=advanced_df.columns)        
         
         roster_df = roster_df.drop(roster_df.columns[[3,4]], axis=1)
-        #per_game_df = per_game_df.drop(per_game_df.columns[['Player', 'GS', ' ]], axis=1)
-        #advanced_df = advanced_df.drop(advanced_df.columns[[0,1,2,3]], axis=1)
         roster_df[roster_df == ''] = '0'
         per_game_df[per_game_df == ''] = '0'
         advanced_df[advanced_df == ''] = '0'
@@ -80,8 +78,6 @@ for year in range(2002,2010):
         current_entry = roster_df
         current_entry['PER'] = advanced_df['PER'].astype('float64')
         current_entry[['Age', 'G', 'MP', '3P','3PA','3P%','ORB', 'DRB', 'TRB', 'AST', 'STL', 'BLK', 'PTS' ]] = per_game_df[['Age', 'G', 'MP', '3P','3PA','3P%','ORB', 'DRB', 'TRB', 'AST', 'STL', 'BLK', 'PTS' ]]
-        #current_entry = pd.concat([current_entry, per_game_df], axis=1)
-        #current_entry = pd.concat([current_entry, advanced_df], axis=1)
         current_entry['key'] = (current_entry['MP'].astype('float32') > 15)*1
         current_entry['Key_Age'] = current_entry['key']*current_entry['Age'].astype('float32')
         
@@ -101,9 +97,7 @@ for year in range(2002,2010):
         current_entry['Ht'] = temp      
         current_entry['Big'] = (current_entry['Ht'] > 81)*1
         current_entry['Stretch_Big'] = current_entry['Big']*current_entry['3PA'].astype('float64')
-        #sep = pd.DataFrame([[year]*len(current_entry.columns)],columns = current_entry.columns)
         player_df = pd.DataFrame([],columns = current_entry.columns)
-        #player_df = pd.concat([player_df, sep])            
         player_df = pd.concat([player_df, current_entry])
         player_df.to_excel(writer, team)      
     
