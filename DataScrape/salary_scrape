@@ -1,0 +1,54 @@
+# this code is to scrape the salary of players from all of the teams in the NBA between the 2010 to 2015 season
+
+import urllib2
+import os
+from bs4 import BeautifulSoup
+import pandas as pd
+
+salary_df = pd.DataFrame([],columns = ['year','team','salary', 'tier_1', 'tier_2', 'tier_3'])
+teams = ['ATL','BOS','BRK','CHI','CLE','DAL','DEN','DET','GSW','HOU','IND','LAL','LAC','MEM','MIA','MIL','MIN','NYK','ORL','PHI','PHO','POR','SAC','SAS','TOR','UTA','WAS']
+
+writer = pd.ExcelWriter('salary.new.xlsx')
+
+for team in teams:
+    salary_df = pd.DataFrame([],columns = ['year','team','salary', 'tier_1', 'tier_2', 'tier_3'])
+    for year in range(2010,2015):
+       
+        response = urllib2.urlopen('http://www.basketball-reference.com/teams/{}/{}.html'.format(team,year))
+        html = response.read()
+        
+        soup = BeautifulSoup(html,'html.parser')
+        
+        team_stats=soup.find("table",id="salaries")
+        
+        data = team_stats.find_all("tr")
+        
+        new_data = []
+        
+        for i in data:
+            new_data.append(i.text)
+             
+        new_data2 = []
+        for i in new_data:
+            new_data2.append((i.replace('\n',',')).split(',', 3))
+        
+        new_data3 = [ x[1:] for x in new_data2]
+        
+        new_data4 = map(lambda x: [x[0],x[1],(x[2].replace(',','').replace('$',''))], new_data3)
+        
+        df = pd.DataFrame(new_data4,columns=new_data4[0])
+        df = df.drop(0,axis=0)
+        df = df.drop('Rk',axis=1)
+        df[df == ''] = '0'
+        df['Salary'] = df['Salary'].astype('float64')
+        
+        tot_salary = df['Salary'].sum()
+        tier_1 = sum(df['Salary'] < 10000000)
+        tier_2 = sum((10000000 <= df['Salary']) * (df['Salary'] < 20000000))
+        tier_3 = sum(20000000 <= df['Salary'])
+        current_entry = pd.DataFrame([[year,team,tot_salary,tier_1,tier_2,tier_3]],columns=['year','team','salary','tier_1', 'tier_2', 'tier_3'])
+        salary_df = pd.concat([salary_df,current_entry])
+
+    salary_df.to_excel(writer, team)   
+
+writer.save()  
