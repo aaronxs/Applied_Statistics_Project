@@ -1,1 +1,1 @@
-This repository contains the code I used to acquire as well as "clean" and manipulate data from http://www.basketball-reference.com using Python for a final projects of one of my courses.  
+This repository contains the Python codes I used to acquire as well as "clean" and manipulate data from http://www.basketball-reference.com the final project of the course Methods of Applied Statistics I (STA2101) at the University of Toronto.
