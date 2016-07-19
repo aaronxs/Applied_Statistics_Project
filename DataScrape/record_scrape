@@ -1,0 +1,51 @@
+# this code is to scrape the game by game record from all of the teams in the NBA between the 2010 to 2015 season
+
+import urllib2
+from bs4 import BeautifulSoup
+import pandas as pd
+
+teams = ['ATL','BOS','BRK','CHI','CLE','DAL','DEN','DET','GSW','HOU','IND','LAL','LAC','MEM','MIA','MIL','MIN','NYK','ORL','PHI','PHO','POR','SAC','SAS','TOR','UTA','WAS']
+
+for year in range(2010,2015):
+    rec_df = pd.DataFrame([],columns = ['Date','Opponent','Tm','Opp','W','L','Streak','Rec']) 
+    writer = pd.ExcelWriter('rec_' + str(year) + '.xlsx')
+    for team in teams:
+        response = urllib2.urlopen('http://www.basketball-reference.com/teams/{}/{}_games.html'.format(team,year))
+        html = response.read()
+        
+        soup = BeautifulSoup(html,'html.parser')
+        
+        team_stats=soup.find("table",id='teams_games')
+        
+        data = team_stats.find_all("tr")
+        
+        new_data = []
+
+        for i in data:
+            new_data.append(i.text)
+            new_data2 = []
+        for i in new_data:
+            new_data2.append((i.replace('\n','$')).split('$'))
+        
+        new_data3 = [ x[1:] for x in new_data2]
+        
+        df = pd.DataFrame(new_data3,columns=new_data3[0])
+        df = df.drop(df.columns[[0,2,3,4,14]],axis=1)
+        if len(df) > 75:
+            df = df.drop([0,21,42,63,84],axis=0)
+        else:
+            df = df.drop([0,21,42,63],axis=0) 
+       
+        rec = df['W'].astype('float32') - df['L'].astype('float32')
+        df['Rec'] = rec    
+        current_entry = df    
+        
+        rec_df = pd.concat([rec_df,current_entry])
+        rec_df.to_excel(writer, team)
+        rec_df = pd.DataFrame([],columns = ['Date','Opponent','Tm','Opp','W','L','Streak','Rec']) 
+    writer.save()    
+
+    
+    
+
+
