@@ -1,0 +1,61 @@
+Option Explicit
+Sub summary_record()
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim teams As Variant
+Dim years As Variant
+Dim team As Variant
+Dim year As Variant
+'Dim ID As Variant
+Dim LastCol As Variant
+Dim ObjLastRow As Variant
+Dim CurrentRowNum As Variant
+Dim PathName As Variant
+'Dim OverAdd As Variant
+'Dim UnderAdd As Variant
+
+'Dim i As Long
+'Dim lastrow As Long
+
+Dim CurrentSheet As Worksheet
+Dim objSheet As Worksheet
+Dim dict As Worksheet
+
+Dim CurrentWorkbook As Workbook
+Dim objWorkbook As Workbook
+
+
+Set dict = ActiveWorkbook.Worksheets("Dict")
+Set CurrentWorkbook = ActiveWorkbook
+
+teams = Array("ATL", "BOS", "BRK", "CHO", "CHI", "CLE", "DAL", "DEN", "DET", "GSW", "HOU", "IND", "LAL", "LAC", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK", "OKC", "ORL", "PHI", "PHO", "POR", "SAC", "SAS", "TOR", "UTA", "WAS")
+years = Array("2010", "2011", "2012", "2013", "2014", "2015")
+
+
+For Each year In years
+    PathName = "rec_" & year & ".xlsm"
+    Set objWorkbook = Workbooks.Open("C:\Users\Aaron-\Desktop\STA2101\Project\Record\" & PathName)
+    For Each team In teams
+        Set CurrentSheet = CurrentWorkbook.Worksheets(team)
+        Set objSheet = objWorkbook.Worksheets(team)
+               
+        ObjLastRow = objSheet.Cells(objSheet.Rows.Count, "M").End(xlUp).Row
+        
+        CurrentRowNum = Application.WorksheetFunction.Match(CInt(year), CurrentSheet.Range("B1:B7"), 0)
+        LastCol = CurrentSheet.Cells(CurrentRowNum, Columns.Count).End(xlToLeft).Column
+        CurrentSheet.Cells(1, CurrentSheet.Cells(CurrentRowNum, Columns.Count).End(xlToLeft).Column + 1).Value = "Over_Win"
+        CurrentSheet.Cells(1, CurrentSheet.Cells(CurrentRowNum, Columns.Count).End(xlToLeft).Column + 2).Value = "Under_Win"
+        
+        'OverAdd = CurrentSheet.Cells(CurrentRowNum, LastCol + 1).Address
+        'UnderAdd = CurrentSheet.Cells(CurrentRowNum, LastCol + 2).Address
+        CurrentSheet.Cells(CurrentRowNum, LastCol + 1) = Application.WorksheetFunction.Sum(objSheet.Range("M2:M" & CStr(ObjLastRow)))
+        CurrentSheet.Cells(CurrentRowNum, LastCol + 2) = Application.WorksheetFunction.Sum(objSheet.Range("N2:N" & CStr(ObjLastRow)))
+        
+    Next team
+    objWorkbook.Close SaveChanges:=True
+Next year
+
+
+dict.Activate
+End Sub
