@@ -1,0 +1,59 @@
+# Likelihood Ratio Test function
+LR.test <- function(dd) {
+     G2 <- 2*sum(dd*log(dd/chisq.test(dd)$expected))
+     G2pvalue <- 1 - pchisq(G2,df= (dim(dd)[1] - 1)*(dim(dd)[2] - 1))
+     list(G2= G2, p_value= G2pvalue)
+}
+library(epitools)
+library(plyr)
+teams <- c("ATL", "BOS", "BRK", "CHO", "CHI", "CLE", "DAL", "DEN", "DET", "GSW", "HOU", "IND", "LAL", "LAC", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK", "OKC", "ORL", "PHI", "PHO", "POR", "SAC", "SAS", "TOR", "UTA", "WAS")
+nbadata <- read.csv("Total.csv", header=T)
+nbadata$salary = nbadata$salary/1000000
+nbadata$Over_Cap = nbadata$Over_Cap + 0
+var.list <- colnames(nbadata)
+
+#################################################################################
+################################Categorical Analysis#############################
+#################################################################################
+
+######################playoff vs. award######################
+playoff <- factor(nbadata$Playoff, levels=c(0,1), labels=c("No", "Yes"))
+award <- factor(nbadata$Award, levels=c(0,1), labels=c("No", "Yes"))
+award.table <- table(award, playoff)
+award.chisqtest <- chisq.test(award.table, simulate.p.value = T, B=10000000, correct=T)
+award.chisqtest
+fisher.test(award.table)
+riskratio.wald(award.table, correction=T)
+oddsratio.wald(award.table, correction=T)
+
+award_new <- factor(nbadata$Award.1, levels=c(0,1), labels=c("No", "Yes"))
+award.new.table <- table(award_new, playoff)
+# chi square test
+award.new.chisqtest <- chisq.test(award.new.table, simulate.p.value = T, B=10000000, correct=T)
+award.new.chisqtest
+# relative risk and odds ratio between the two variables
+riskratio.wald(award.new.table, correction=T)
+oddsratio.wald(award.new.table, correction=T)
+
+
+######################Playoff vs. Over_Cap######################
+salary.cap <- c(57.7, 58, 58, 58, 58.679, 63.065)
+nbadata$Over_Cap = nbadata$Over_Cap + 0
+Over_Cap <- factor(nbadata$Over_Cap, levels=c(0,1), labels=c("No", "Yes"))
+cap.table <- table(Over_Cap, playoff)
+# cap.chisqtest <- chisq.test(cap.table, simulate.p.value = T, B=10000000, correct=T)
+# fisher.test(cap.table)
+# running Poisson regression
+cap.tab <- ddply(nbadata, .(Over_Cap, Playoff), summarize, count=length(Playoff))
+null.poisson <- glm(count ~ 1, data=cap.tab, family=poisson)
+summary(null.poisson)
+cap.poisson <- glm(count ~ Over_Cap*Playoff, data=cap.tab, family=poisson)
+summary(cap.poisson)
+anova(null.poisson, cap.poisson, test="LRT")
+
+######################Playoff vs. Max_Player######################
+Max_Player <- (nbadata$tier_3 > 0) + 0
+Max_Player <- factor(Max_Player, levels=c(0, 1), labels=c("No", "Yes"))
+max.table <- table(Max_Player, playoff)
+# likelihood ratio test
+LR.test(max.table)
