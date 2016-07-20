@@ -1,0 +1,27 @@
+Option Explicit
+Sub Clear()
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim teams As Variant
+Dim team As Variant
+
+Dim CurrentSheet As Worksheet
+Dim dict As Worksheet
+
+Dim CurrentWorkbook As Workbook
+
+
+Set dict = ActiveWorkbook.Worksheets("Dict")
+Set CurrentWorkbook = ActiveWorkbook
+
+teams = Array("ATL", "BOS", "BRK", "CHO", "CHI", "CLE", "DAL", "DEN", "DET", "GSW", "HOU", "IND", "LAL", "LAC", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK", "OKC", "ORL", "PHI", "PHO", "POR", "SAC", "SAS", "TOR", "UTA", "WAS")
+
+For Each team In teams
+        Set CurrentSheet = CurrentWorkbook.Worksheets(team)
+        'CurrentSheet.Range("H1:AAA7").Clear
+        CurrentSheet.Range("H1:AAA7").Delete
+Next team
+
+dict.Activate
+End Sub
