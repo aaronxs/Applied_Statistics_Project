@@ -1,0 +1,21 @@
+Sub savetocsv()
+Dim teams As Variant
+Dim team As Variant
+
+Dim ws As Worksheet
+
+Dim wb As Workbook
+
+Dim path As String
+
+path = ActiveWorkbook.path & "\"
+
+teams = Array("ATL", "BOS", "BRK", "CHO", "CHI", "CLE", "DAL", "DEN", "DET", "GSW", "HOU", "IND", "LAL", "LAC", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK", "OKC", "ORL", "PHI", "PHO", "POR", "SAC", "SAS", "TOR", "UTA", "WAS")
+Set wb = ActiveWorkbook
+
+For Each team In teams
+    Set ws = wb.Worksheets(team)
+    wb.SaveAs filename:=path & "_" & ws.Name & ".csv", FileFormat:=xlCSV, CreateBackup:=False
+Next team
+
+End Sub
