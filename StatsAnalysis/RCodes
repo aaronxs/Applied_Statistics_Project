@@ -29,50 +29,10 @@ model.one <- glm(Playoff ~ salary + tier_1 + tier_2 + tier_3 + PS.G + PA.G + SRS
 summary(model.one)
 
 model.minAIC <- step(model.one, k=2, trace=0)
-summary(model.minAIC)	
+summary(model.minAIC)
+# likelihood ratio test on the two nested models
 anova(model.minAIC, model.one, test="LRT")
 
-#################################################################################
-################################Categorical Analysis#############################
-#################################################################################
-
-######################playoff vs. award######################
-playoff <- factor(nbadata$Playoff, levels=c(0,1), labels=c("No", "Yes"))
-award <- factor(nbadata$Award, levels=c(0,1), labels=c("No", "Yes"))
-award.table <- table(award, playoff)
-award.chisqtest <- chisq.test(award.table, simulate.p.value = T, B=10000000, correct=T)
-award.chisqtest
-fisher.test(award.table)
-riskratio.wald(award.table, correction=T)
-oddsratio.wald(award.table, correction=T)
-
-award_new <- factor(nbadata$Award.1, levels=c(0,1), labels=c("No", "Yes"))
-award.new.table <- table(award_new, playoff)
-award.new.chisqtest <- chisq.test(award.new.table, simulate.p.value = T, B=10000000, correct=T)
-award.new.chisqtest
-riskratio.wald(award.new.table, correction=T)
-oddsratio.wald(award.new.table, correction=T)
-
-
-######################Playoff vs. Over_Cap######################
-salary.cap <- c(57.7, 58, 58, 58, 58.679, 63.065)
-nbadata$Over_Cap = nbadata$Over_Cap + 0
-Over_Cap <- factor(nbadata$Over_Cap, levels=c(0,1), labels=c("No", "Yes"))
-cap.table <- table(Over_Cap, playoff)
-# cap.chisqtest <- chisq.test(cap.table, simulate.p.value = T, B=10000000, correct=T)
-# fisher.test(cap.table)
-cap.tab <- ddply(nbadata, .(Over_Cap, Playoff), summarize, count=length(Playoff))
-null.poisson <- glm(count ~ 1, data=cap.tab, family=poisson)
-summary(null.poisson)
-cap.poisson <- glm(count ~ Over_Cap*Playoff, data=cap.tab, family=poisson)
-summary(cap.poisson)
-anova(null.poisson, cap.poisson, test="LRT")
-
-######################Playoff vs. Max_Player######################
-Max_Player <- (nbadata$tier_3 > 0) + 0
-Max_Player <- factor(Max_Player, levels=c(0, 1), labels=c("No", "Yes"))
-max.table <- table(Max_Player, playoff)
-LR.test(max.table)
 
 #################################################################################
 ################################Unused code######################################
