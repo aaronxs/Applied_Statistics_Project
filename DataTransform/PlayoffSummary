@@ -1,0 +1,92 @@
+Option Explicit
+Sub summary_playoff()
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim teams As Variant
+Dim years As Variant
+Dim team As Variant
+Dim year As Variant
+Dim ID As Variant
+Dim LastCol As Variant
+Dim ObjRowNum As Variant
+Dim CurrentRowNum As Variant
+Dim Add As Variant
+
+'Dim i As Long
+'Dim lastrow As Long
+
+Dim CurrentSheet As Worksheet
+Dim ws As Worksheet
+Dim objSheet As Worksheet
+Dim dict As Worksheet
+
+Dim CurrentWorkbook As Workbook
+Dim objWorkbook As Workbook
+
+
+Set dict = ActiveWorkbook.Worksheets("Dict")
+Set CurrentWorkbook = ActiveWorkbook
+
+teams = Array("ATL", "BOS", "BRK", "CHO", "CHI", "CLE", "DAL", "DEN", "DET", "GSW", "HOU", "IND", "LAL", "LAC", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK", "OKC", "ORL", "PHI", "PHO", "POR", "SAC", "SAS", "TOR", "UTA", "WAS")
+'teams = Array("SAC") ' , "SAS", "TOR", "UTA", "WAS")
+
+years = Array("2010", "2011", "2012", "2013", "2014", "2015")
+
+'For Each ws In CurrentWorkbook.Worksheets
+'    If ws.Name <> "Dict" Then ws.Delete
+'Next ws
+''
+'For Each team In teams
+'    CurrentWorkbook.Sheets.Add(After:=Sheets(Worksheets.Count)).Name = team
+'Next team
+
+Set objWorkbook = Workbooks.Open("C:\Users\Aaron-\Desktop\STA2101\Project\Playoff\playoff1.xlsx")
+
+For Each team In teams
+    Set CurrentSheet = CurrentWorkbook.Worksheets(team)
+    LastCol = CurrentSheet.Cells(1, Columns.Count).End(xlToLeft).Column
+    For Each year In years
+        Set objSheet = objWorkbook.Worksheets(year)
+        If team = "BRK" Then
+            If CInt(year) <= 2012 Then
+                ID = "New Jersey Nets"
+            Else
+                ID = "Brooklyn Nets"
+            End If
+        ElseIf team = "CHO" Then
+            If CInt(year) <= 2014 Then
+                ID = "Charlotte Bobcats"
+            Else
+                ID = "Charlotte Hornets"
+            End If
+        ElseIf team = "NOP" Then
+            If CInt(year) <= 2013 Then
+                ID = "New Orleans Hornets"
+            Else
+                ID = "New Orleans Pelicans"
+            End If
+        Else
+            ID = Application.WorksheetFunction.VLookup(team, dict.Range("A1:B27"), 2)
+        End If
+        Debug.Print year
+        ObjRowNum = Application.WorksheetFunction.Match(ID, objSheet.Range("B1:B31"), 0)
+        CurrentRowNum = Application.WorksheetFunction.Match(CInt(year), CurrentSheet.Range("B1:B7"), 0)
+        Add = CurrentSheet.Cells(CurrentRowNum, LastCol + 1).Address
+        objSheet.Range("C1:H1").Copy
+        CurrentSheet.Range(CurrentSheet.Cells(1, LastCol + 1).Address).PasteSpecial xlPasteValues
+        objSheet.Range("C" & CStr(ObjRowNum) & ":H" & CStr(ObjRowNum)).Copy
+        CurrentSheet.Range(Add).PasteSpecial xlPasteValues
+        
+    Next year
+
+    
+Next team
+
+objWorkbook.Close SaveChanges:=True
+dict.Activate
+End Sub
+
+
+
+
