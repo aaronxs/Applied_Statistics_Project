@@ -1,0 +1,68 @@
+Option Explicit
+Sub summary_player()
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+Application.EnableEvents = False
+
+Dim teams As Variant
+Dim years As Variant
+Dim team As Variant
+Dim year As Variant
+'Dim ID As Variant
+Dim CurrentLastCol As Variant
+Dim ObjLastRow As Variant
+Dim CurrentRowNum As Variant
+Dim PathName As Variant
+'Dim OverAdd As Variant
+'Dim UnderAdd As Variant
+
+'Dim i As Long
+'Dim lastrow As Long
+
+Dim CurrentSheet As Worksheet
+Dim objSheet As Worksheet
+Dim dict As Worksheet
+
+Dim CurrentWorkbook As Workbook
+Dim objWorkbook As Workbook
+
+Set dict = ActiveWorkbook.Worksheets("Dict")
+Set CurrentWorkbook = ActiveWorkbook
+
+teams = Array("ATL", "BOS", "BRK", "CHO", "CHI", "CLE", "DAL", "DEN", "DET", "GSW", "HOU", "IND", "LAL", "LAC", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK", "OKC", "ORL", "PHI", "PHO", "POR", "SAC", "SAS", "TOR", "UTA", "WAS")
+years = Array("2010", "2011", "2012", "2013", "2014", "2015")
+
+For Each year In years
+    PathName = "player_" & year & ".xlsm"
+    Set objWorkbook = Workbooks.Open("C:\Users\Aaron-\Desktop\STA2101\Project\Player\" & PathName)
+    For Each team In teams
+        Set CurrentSheet = CurrentWorkbook.Worksheets(team)
+        Set objSheet = objWorkbook.Worksheets(team)
+               
+        ObjLastRow = objSheet.Cells(objSheet.Rows.Count, "U").End(xlUp).Row
+        CurrentRowNum = Application.WorksheetFunction.Match(CInt(year), CurrentSheet.Range("B1:B7"), 0)
+        CurrentLastCol = CurrentSheet.Cells(CurrentRowNum, Columns.Count).End(xlToLeft).Column
+        
+        CurrentSheet.Cells(1, CurrentSheet.Cells(CurrentRowNum, Columns.Count).End(xlToLeft).Column + 1).Value = "Average_Key_Age"
+        CurrentSheet.Cells(1, CurrentSheet.Cells(CurrentRowNum, Columns.Count).End(xlToLeft).Column + 2).Value = "Average_key_Exp"
+        CurrentSheet.Cells(1, CurrentSheet.Cells(CurrentRowNum, Columns.Count).End(xlToLeft).Column + 3).Value = "Total_Key_Games_Missed"
+        CurrentSheet.Cells(1, CurrentSheet.Cells(CurrentRowNum, Columns.Count).End(xlToLeft).Column + 4).Value = "Total_Big_3PA"
+        CurrentSheet.Cells(1, CurrentSheet.Cells(CurrentRowNum, Columns.Count).End(xlToLeft).Column + 5).Value = "Total_Big"
+        CurrentSheet.Cells(1, CurrentSheet.Cells(CurrentRowNum, Columns.Count).End(xlToLeft).Column + 6).Value = "Average_Key_PER"
+        CurrentSheet.Cells(1, CurrentSheet.Cells(CurrentRowNum, Columns.Count).End(xlToLeft).Column + 7).Value = "Total_3PA"
+        
+        CurrentSheet.Cells(CurrentRowNum, CurrentLastCol + 1) = Application.WorksheetFunction.AverageIf(objSheet.Range("U2:U" & CStr(ObjLastRow)), "<>0")
+        CurrentSheet.Cells(CurrentRowNum, CurrentLastCol + 2) = Application.WorksheetFunction.AverageIf(objSheet.Range("V2:V" & CStr(ObjLastRow)), "<>0")
+        CurrentSheet.Cells(CurrentRowNum, CurrentLastCol + 3) = Application.WorksheetFunction.Sum(objSheet.Range("W2:W" & CStr(ObjLastRow)))
+        CurrentSheet.Cells(CurrentRowNum, CurrentLastCol + 4) = Application.WorksheetFunction.Sum(objSheet.Range("Y2:Y" & CStr(ObjLastRow)))
+        CurrentSheet.Cells(CurrentRowNum, CurrentLastCol + 5) = Application.WorksheetFunction.Sum(objSheet.Range("X2:X" & CStr(ObjLastRow)))
+        CurrentSheet.Cells(CurrentRowNum, CurrentLastCol + 6) = Application.WorksheetFunction.AverageIf(objSheet.Range("Z2:Z" & CStr(ObjLastRow)), "<>0")
+        'CurrentSheet.Cells(CurrentRowNum, CurrentLastCol + 7) = Application.WorksheetFunction.Sum(CDbl(objSheet.Range("K2:K" & CStr(ObjLastRow)).Value))
+        Debug.Print objSheet.Range("K2:K" & CStr(ObjLastRow)).Value
+    Next team
+    objWorkbook.Close SaveChanges:=True
+Next year
+
+
+dict.Activate
+End Sub
