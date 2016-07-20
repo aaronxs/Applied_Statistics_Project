@@ -1,4 +1,4 @@
-setwd("C:/Users/Aaron-/Desktop/STA2101/Project/Final")
+# Likelihood Ratio Test function
 LR.test <- function(dd) {
      G2 <- 2*sum(dd*log(dd/chisq.test(dd)$expected))
      G2pvalue <- 1 - pchisq(G2,df= (dim(dd)[1] - 1)*(dim(dd)[2] - 1))
@@ -74,18 +74,9 @@ Max_Player <- factor(Max_Player, levels=c(0, 1), labels=c("No", "Yes"))
 max.table <- table(Max_Player, playoff)
 LR.test(max.table)
 
-
-
-
-
-
-
-
-
 #################################################################################
 ################################Unused code######################################
 #################################################################################
-
 
 ###########playoff vs. tier1
 tier1 <- numeric(length(nbadata$tier_1))
@@ -149,8 +140,6 @@ Big.glm <- glm(count ~ Playoff*Big, data=Big.tab, family=poisson)
 summary(Big.glm)
 anova(Big.glm.null, Big.glm, test="LRT")
 
-
-
 ######################playoff vs. Over_Cap######################
 Over_Cap <- c()
 salary.cap <- c(57.7, 58, 58, 58, 58.679, 63.065)
@@ -162,9 +151,6 @@ Over_Cap = factor(Over_Cap + 0, levels=c(0, 1), labels=c("No", "Yes"))
 cap.table <- table(Over_Cap, playoff)
 nbadata$Over_Cap = Over_Cap
 cap.tab <- ddply(nbadata, .(Over_Cap, Playoff), summarize, count= length(Playoff))
-
-
-
 
 ######################playoff vs. stretch_big######################
 #average_3pa <- c( 1.505, 1.5371, 1.5093, 1.5885, 1.6893, 1.8700)
@@ -178,6 +164,3 @@ Stretch_Big = factor(Stretch_Big + 0, levels=c(0, 1), labels=c("No", "Yes"))
 stretch.table <- table(Stretch_Big, playoff)
 nbadata$stretch_big = Stretch_Big
 stretch.tab <- ddply(nbadata, .(Stretch_Big, Playoff), summarize, count= length(Playoff))
-
-
-
