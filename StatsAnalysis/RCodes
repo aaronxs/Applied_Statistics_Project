@@ -1,0 +1,183 @@
+setwd("C:/Users/Aaron-/Desktop/STA2101/Project/Final")
+LR.test <- function(dd) {
+     G2 <- 2*sum(dd*log(dd/chisq.test(dd)$expected))
+     G2pvalue <- 1 - pchisq(G2,df= (dim(dd)[1] - 1)*(dim(dd)[2] - 1))
+     list(G2= G2, p_value= G2pvalue)
+}
+library(epitools)
+library(plyr)
+teams <- c("ATL", "BOS", "BRK", "CHO", "CHI", "CLE", "DAL", "DEN", "DET", "GSW", "HOU", "IND", "LAL", "LAC", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK", "OKC", "ORL", "PHI", "PHO", "POR", "SAC", "SAS", "TOR", "UTA", "WAS")
+nbadata <- read.csv("Total.csv", header=T)
+nbadata$salary = nbadata$salary/1000000
+nbadata$Over_Cap = nbadata$Over_Cap + 0
+var.list <- colnames(nbadata)
+
+#################################################################################
+################################Logistic Regression##############################
+#################################################################################
+
+model.null <- glm(Playoff ~ 1, data = nbadata, family = binomial)
+model.full <- glm(Playoff ~ . -year -team -W -L -Total_Big_3PA -Total_Big -Award - Award_New-Over_Cap -Max_Player, data = nbadata, family = binomial)
+summary(model.full)
+anova(model.null, model.full, test="LRT")
+
+model.salary <- glm(Playoff ~ salary + tier_1 + tier_2 + tier_3, data=nbadata, family=binomial)
+anova(model.null, salary.model, test="LRT")
+
+
+model.one <- glm(Playoff ~ salary + tier_1 + tier_2 + tier_3 + PS.G + PA.G + SRS + Over_Win + Under_Win + Average_key_Exp + Total_Key_Games_Missed + Average_Key_PER + Award_Num, data=nbadata, family=binomial)
+summary(model.one)
+
+model.minAIC <- step(model.one, k=2, trace=0)
+summary(model.minAIC)	
+anova(model.minAIC, model.one, test="LRT")
+
+#################################################################################
+################################Categorical Analysis#############################
+#################################################################################
+
+######################playoff vs. award######################
+playoff <- factor(nbadata$Playoff, levels=c(0,1), labels=c("No", "Yes"))
+award <- factor(nbadata$Award, levels=c(0,1), labels=c("No", "Yes"))
+award.table <- table(award, playoff)
+award.chisqtest <- chisq.test(award.table, simulate.p.value = T, B=10000000, correct=T)
+award.chisqtest
+fisher.test(award.table)
+riskratio.wald(award.table, correction=T)
+oddsratio.wald(award.table, correction=T)
+
+award_new <- factor(nbadata$Award.1, levels=c(0,1), labels=c("No", "Yes"))
+award.new.table <- table(award_new, playoff)
+award.new.chisqtest <- chisq.test(award.new.table, simulate.p.value = T, B=10000000, correct=T)
+award.new.chisqtest
+riskratio.wald(award.new.table, correction=T)
+oddsratio.wald(award.new.table, correction=T)
+
+
+######################Playoff vs. Over_Cap######################
+salary.cap <- c(57.7, 58, 58, 58, 58.679, 63.065)
+nbadata$Over_Cap = nbadata$Over_Cap + 0
+Over_Cap <- factor(nbadata$Over_Cap, levels=c(0,1), labels=c("No", "Yes"))
+cap.table <- table(Over_Cap, playoff)
+# cap.chisqtest <- chisq.test(cap.table, simulate.p.value = T, B=10000000, correct=T)
+# fisher.test(cap.table)
+cap.tab <- ddply(nbadata, .(Over_Cap, Playoff), summarize, count=length(Playoff))
+null.poisson <- glm(count ~ 1, data=cap.tab, family=poisson)
+summary(null.poisson)
+cap.poisson <- glm(count ~ Over_Cap*Playoff, data=cap.tab, family=poisson)
+summary(cap.poisson)
+anova(null.poisson, cap.poisson, test="LRT")
+
+######################Playoff vs. Max_Player######################
+Max_Player <- (nbadata$tier_3 > 0) + 0
+Max_Player <- factor(Max_Player, levels=c(0, 1), labels=c("No", "Yes"))
+max.table <- table(Max_Player, playoff)
+LR.test(max.table)
+
+
+
+
+
+
+
+
+
+#################################################################################
+################################Unused code######################################
+#################################################################################
+
+
+###########playoff vs. tier1
+tier1 <- numeric(length(nbadata$tier_1))
+
+for (i in 1:length(tier1)) {
+	if (nbadata$tier_1[i] <=10) 
+		{tier1[i] = 0}
+	else if ( (10 < nbadata$tier_1[i]) & (nbadata$tier_1[i]<=20))
+		{tier1[i] = 1}
+	else 
+		tier1[i] = 2
+}
+tier1 <- factor(tier1, levels=0:2, labels=c("< 10", "10 to 20", "> 20"))
+tier1.table <- table(playoff, tier1)
+nbadata$tier1 = tier1
+tier1.tab <- ddply(nbadata, .(Playoff, tier1), summarize, count= length(Playoff))
+tier1.glm.null <- glm(count ~ 1, data=tier1.tab, family=poisson)
+tier1.glm <- glm(count ~ Playoff*tier1, data=tier1.tab, family=poisson)
+summary(tier1.glm)
+anova(tier1.glm.null, tier1.glm, test="LRT")
+
+
+###########playoff vs. tier2
+tier2 <- numeric(length(nbadata$tier_2))
+
+for (i in 1:length(tier2)) {
+	if (nbadata$tier_2[i] == 0) 
+		{tier2[i] = 0}
+	else if (nbadata$tier_2[i] == 1)
+		{tier2[i] = 1}
+	else if (nbadata$tier_2[i] == 2)
+		{tier2[i] = 2}
+	else if (nbadata$tier_2[i] == 3)
+		{tier2[i] = 3}
+	else 
+		tier2[i] = 4
+}
+tier2 <- factor(tier2, levels=0:4, labels=c("None", "1 player", "2 players", "3 players", "4 players"))
+tier2.table <- table(playoff, tier2)
+nbadata$tier2 = tier2
+
+######################playoff vs. Big
+Big <- numeric(length(nbadata$Total_Big)) 	# convert the number of big man in a team to factor
+
+for (i in 1:length(Big)) {
+	if (nbadata$Total_Big[i] <= 3) 
+		{Big[i] = 0}
+	else if ( (3 < nbadata$Total_Big[i]) & (nbadata$Total_Big[i] <= 5))
+		{Big[i] = 1}
+	else if ( (5 < nbadata$Total_Big[i]) & (nbadata$Total_Big[i] <= 7))
+		{Big[i] = 2}
+	else 
+		Big[i] = 3
+}
+Big <- factor(Big, levels=0:3, labels=c("2 to 3", "4 to 5", "6 to 7", "8 to 9"))
+Big.table <- table(playoff, Big)
+nbadata$Big = Big
+Big.tab <- ddply(nbadata, .(Playoff, Big), summarize, count= length(Playoff))
+Big.glm.null <- glm(count ~ 1, data=Big.tab, family=poisson)
+Big.glm <- glm(count ~ Playoff*Big, data=Big.tab, family=poisson)
+summary(Big.glm)
+anova(Big.glm.null, Big.glm, test="LRT")
+
+
+
+######################playoff vs. Over_Cap######################
+Over_Cap <- c()
+salary.cap <- c(57.7, 58, 58, 58, 58.679, 63.065)
+year <- 2010:2015
+for (j in 1:6) {
+	Over_Cap <- append(Over_Cap, subset(nbadata, year == year[j])$salary > salary.cap[j])
+}
+Over_Cap = factor(Over_Cap + 0, levels=c(0, 1), labels=c("No", "Yes"))
+cap.table <- table(Over_Cap, playoff)
+nbadata$Over_Cap = Over_Cap
+cap.tab <- ddply(nbadata, .(Over_Cap, Playoff), summarize, count= length(Playoff))
+
+
+
+
+######################playoff vs. stretch_big######################
+#average_3pa <- c( 1.505, 1.5371, 1.5093, 1.5885, 1.6893, 1.8700)
+Stretch_Big <- c()
+year <- 2010:2015
+nbadata$average_big_3pa <- nbadata$Total_Big_3PA/nbadata$Total_Big
+for (j in 1:6) {
+	Stretch_Big <- append(Stretch_Big, subset(nbadata, year == year[j])$average_big_3pa > 1)
+}
+Stretch_Big = factor(Stretch_Big + 0, levels=c(0, 1), labels=c("No", "Yes"))
+stretch.table <- table(Stretch_Big, playoff)
+nbadata$stretch_big = Stretch_Big
+stretch.tab <- ddply(nbadata, .(Stretch_Big, Playoff), summarize, count= length(Playoff))
+
+
+
