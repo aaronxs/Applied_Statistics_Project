@@ -11,7 +11,7 @@ import pandas as pd
 #teams = ['ATL','BOS','BRK','CHO','CHI','CLE','DAL','DEN','DET','GSW','HOU','IND','LAL','LAC','MEM','MIA','MIL','MIN','NOP','NYK','OKC','ORL','PHI','PHO','POR','SAC','SAS','TOR','UTA','WAS']
 teams = ['ATL','BOS','BRK','CHI','CLE','DAL','DEN','DET','GSW','HOU','IND','LAL','LAC','MEM','MIA','MIL','MIN','NYK','ORL','PHI','PHO','POR','SAC','SAS','TOR','UTA','WAS']
 # seasons
-time = range(2002, 2010)
+time = range(2005, 2010)
 
 # scrap player stats from seasons specified in the variable time
 for year in time:
