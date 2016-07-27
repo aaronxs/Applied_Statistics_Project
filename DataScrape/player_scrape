@@ -1,30 +1,43 @@
-# this code is to scrape the player statistics from all of the teams in the NBA between the 2010 to 2015 season
-
+# This script will extract player sats from specified seasons and teams
 import urllib2
 from bs4 import BeautifulSoup
 import pandas as pd
 
-teams = ['ATL','BOS','BRK','CHI','CLE','DAL','DEN','DET','GSW','HOU','IND','LAL','LAC','MEM','MIA','MIL','MIN','NYK','ORL','PHI','PHO','POR','SAC','SAS','TOR','UTA','WAS']
+#import numpy as np
+# In[151]:
 
-for year in range(2010,2015):
-    # create a excel file to store the stats of players in each of the years
+# test
+# teams = ['TOR', 'GSW']
+#teams = ['ATL','BOS','BRK','CHO','CHI','CLE','DAL','DEN','DET','GSW','HOU','IND','LAL','LAC','MEM','MIA','MIL','MIN','NOP','NYK','OKC','ORL','PHI','PHO','POR','SAC','SAS','TOR','UTA','WAS']
+teams = ['ATL','BOS','BRK','CHI','CLE','DAL','DEN','DET','GSW','HOU','IND','LAL','LAC','MEM','MIA','MIL','MIN','NYK','ORL','PHI','PHO','POR','SAC','SAS','TOR','UTA','WAS']
+# seasons
+time = range(2002, 2010)
+
+# scrap player stats from seasons specified in the variable time
+for year in time:
+    # create a xlsx file for each year
     writer = pd.ExcelWriter('player_' + str(year) + '.xlsx')
-    
     for team in teams:
-        #current_entry = []        
+        #current_entry = []
+        # open the link  
         response = urllib2.urlopen('http://www.basketball-reference.com/teams/{}/{}.html'.format(team,year))
+        # html codes        
         html = response.read()
-        
         soup = BeautifulSoup(html,'html.parser')
         
+        # player roster table html code
         team_roster = soup.find("table",id='roster')
+        # per game stats table html code
         per_game = soup.find("table",id='per_game')
+        # advanced stats table html code
         advanced = soup.find("table",id='advanced')
         
+        # create list consists of strings begin/end with tr
         roster_data = team_roster.find_all("tr")
         per_game_data = per_game.find_all("tr")
         advanced_data = advanced.find_all("tr")
         
+        # extract the texts from each strings
         roster_new_data = []
         per_game_new_data = []
         advanced_new_data = []             
@@ -35,6 +48,7 @@ for year in range(2010,2015):
         for i in advanced_data:
             advanced_new_data.append(i.text)
         
+        # replace all the \n with $ and then split the string into a list by $
         roster_new_data2 = []
         per_game_new_data2 = []
         advanced_new_data2 = []
@@ -44,7 +58,8 @@ for year in range(2010,2015):
             per_game_new_data2.append((i.replace('\n','$')).split('$'))
         for i in advanced_new_data:
             advanced_new_data2.append((i.replace('\n','$')).split('$')) 
-
+        
+        # take out the unwanted columns
         roster_new_data3 = [ x[2:8] for x in roster_new_data2]
         per_game_new_data3 = [ x[2:29] for x in per_game_new_data2]
         advanced_new_data3 = []
@@ -54,52 +69,77 @@ for year in range(2010,2015):
             temp.extend(x[24:28])
             advanced_new_data3.append(temp)
         
+        # create data frame
         roster_df = pd.DataFrame(roster_new_data3, columns = roster_new_data3[0])
         per_game_df = pd.DataFrame(per_game_new_data3, columns = per_game_new_data3[0])
         advanced_df = pd.DataFrame(advanced_new_data3, columns = advanced_new_data3[0])
         
+        # drop the duplicate header
         roster_df = roster_df.drop([0],axis=0)
         per_game_df = per_game_df.drop([0],axis=0)
         advanced_df = advanced_df.drop([0],axis=0)
-
+        
+        # sort by name in ascending order 
         roster_df = roster_df.sort_values(by='Player', ascending=True)
         per_game_df = per_game_df.sort_values(by='Player', ascending=True)
         advanced_df = advanced_df.sort_values(by='Player', ascending=True)
         
+        # reindex the dataframe
         roster_df = pd.DataFrame(roster_df.as_matrix(), columns=roster_df.columns)
         per_game_df = pd.DataFrame(per_game_df.as_matrix(), columns=per_game_df.columns)
         advanced_df = pd.DataFrame(advanced_df.as_matrix(), columns=advanced_df.columns)        
         
+        # drop the unnecessary columns
         roster_df = roster_df.drop(roster_df.columns[[3,4]], axis=1)
+        #per_game_df = per_game_df.drop(per_game_df.columns[['Player', 'GS', ' ]], axis=1)
+        #advanced_df = advanced_df.drop(advanced_df.columns[[0,1,2,3]], axis=1)
         roster_df[roster_df == ''] = '0'
         per_game_df[per_game_df == ''] = '0'
         advanced_df[advanced_df == ''] = '0'
         
+        # create the final table
         current_entry = roster_df
         current_entry['PER'] = advanced_df['PER'].astype('float64')
         current_entry[['Age', 'G', 'MP', '3P','3PA','3P%','ORB', 'DRB', 'TRB', 'AST', 'STL', 'BLK', 'PTS' ]] = per_game_df[['Age', 'G', 'MP', '3P','3PA','3P%','ORB', 'DRB', 'TRB', 'AST', 'STL', 'BLK', 'PTS' ]]
+        #current_entry = pd.concat([current_entry, per_game_df], axis=1)
+        #current_entry = pd.concat([current_entry, advanced_df], axis=1)
+        # creating a new variable key, if a player average more than 15 mins per game
         current_entry['key'] = (current_entry['MP'].astype('float32') > 15)*1
+        # calculate the age of the key players
         current_entry['Key_Age'] = current_entry['key']*current_entry['Age'].astype('float32')
         
-        exp = []        
+        exp = []
+        # change experience rookie to 0      
         for x in current_entry['Exp']:
             if x == u'R':
                 exp.extend([0])
             else:
                 exp.extend([int(x)])
         current_entry['Exp'] = exp
+        # calculate experience of the key players 
         current_entry['Key_Exp'] = current_entry['key']*current_entry['Exp']
+        # calculate the number of games missed (out of 82)
         current_entry['Key_Game_Missed'] = current_entry['key']*(82 -current_entry['G'].astype('int32'))
         
         temp = []
+        # convert height from feet to inches
         for x in current_entry['Ht']:
             temp.extend([int(x[0])*12 + int(x[2:]) ])
-        current_entry['Ht'] = temp      
+        current_entry['Ht'] = temp
+        # new variable: big if player is over 81 inches tall
         current_entry['Big'] = (current_entry['Ht'] > 81)*1
+        # count how many 3 pointers the big men attempt per game
         current_entry['Stretch_Big'] = current_entry['Big']*current_entry['3PA'].astype('float64')
+        #sep = pd.DataFrame([[year]*len(current_entry.columns)],columns = current_entry.columns)
         player_df = pd.DataFrame([],columns = current_entry.columns)
+        #player_df = pd.concat([player_df, sep])            
         player_df = pd.concat([player_df, current_entry])
         player_df.to_excel(writer, team)      
     
     writer.save()    
+    # create an empty data frame
     player_df = pd.DataFrame([],columns = current_entry.columns)
+
+    
+
+
